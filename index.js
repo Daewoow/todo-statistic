@@ -32,6 +32,13 @@ function processCommand(command) {
             const sortBy = args[0];
             sortTodos(sortBy);
             break;
+        case 'date':
+            const dateStr = args[0];
+            const filteredTodos = filterTodosByDate(dateStr);
+            for (const elem of filteredTodos){
+                console.log(elem);
+            }
+            break;
         default:
             console.log('wrong command');
             break;
@@ -39,17 +46,20 @@ function processCommand(command) {
 }
 
 function extractTodos(files) {
-    let todos = [];
+    const todos = [];
+
+    const todoRegex = /\/\/\s*TODO\s*:?\s*(.*)/i;
 
     files.forEach((fileContent, fileName) => {
         const lines = fileContent.split('\n');
-        lines.forEach((line) => {
-            line = line.trim();
-            if (line.includes('// TODO')) {
-                let text = line.slice(7).trim();
-                let user = '', date = '';
-                const parts = text.split(';').map(part => part.trim());
 
+        lines.forEach((line) => {
+            const match = line.match(todoRegex);
+            if (match) {
+                let text = match[1].trim();
+                let user = '', date = '';
+
+                const parts = text.split(';').map(part => part.trim());
                 if (parts.length === 3) {
                     user = parts[0];
                     date = parts[1];
@@ -64,7 +74,8 @@ function extractTodos(files) {
 
                 user = user.trim();
                 date = date.trim();
-                todos.push({ text, fileName, user, date });
+
+                todos.push({ text, file: fileName, user, date });
             }
         });
     });
@@ -132,6 +143,22 @@ function displayTodos(todos) {
 
     console.log('-'.repeat(3 + maxUserLength + maxDateLength + maxCommentLength + 6));
 }
+
+function filterTodosByDate(dateStr) {
+    const parts = dateStr.split('-').map(Number);
+    let year = parts[0];
+    let month = parts[1] || 1;
+    let day = parts[2] || 1;
+
+    const targetDate = new Date(year, month - 1, day);
+
+    return todos.filter(todo => {
+        if (!todo.date) return false;
+        const todoDate = new Date(todo.date);
+        return todoDate >= targetDate;
+    });
+}
+
 
 
 
