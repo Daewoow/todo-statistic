@@ -13,25 +13,36 @@ function getFiles() {
 }
 
 function processCommand(command) {
-    switch (command) {
-        case 'exit':
-            process.exit(0);
-            break;
-        case 'show':
-            for (const todo of todos) {
+    const parts = command.split(" ");
+
+    if (parts[0] === "user" && parts.length === 2) {
+        const username = parts[1];
+        for (const todo of todos) {
+            if (todo.toLowerCase().includes(username)){
                 console.log(todo);
             }
-            break;
-        case 'important':
-            for (const todo of todos){
-                if (~todo.indexOf("!")){
+        }
+    } else {
+        switch (command) {
+            case 'exit':
+                process.exit(0);
+                break;
+            case 'show':
+                for (const todo of todos) {
                     console.log(todo);
                 }
-            }
-            break;
-        default:
-            console.log('wrong command');
-            break;
+                break;
+            case 'important':
+                for (const todo of todos){
+                    if (~todo.indexOf("!")){
+                        console.log(todo);
+                    }
+                }
+                break;
+            default:
+                console.log('wrong command');
+                break;
+        }
     }
 }
 
