@@ -19,7 +19,14 @@ function processCommand(command) {
             break;
         case 'show':
             for (const todo of todos) {
-                console.log(todo)
+                console.log(todo);
+            }
+            break;
+        case 'important':
+            for (const todo of todos){
+                if (~todo.indexOf("!")){
+                    console.log(todo);
+                }
             }
             break;
         default:
