@@ -20,13 +20,14 @@ function processCommand(command) {
             break;
         case 'user':
             const username = args[0].toLowerCase();
-            displayTodos(todos.filter(todo => todo.toLowerCase().includes(username)))
+            displayTodos(todos.filter(todo => todo.user.toLowerCase().includes(username)))
             break;
         case 'show':
             displayTodos(todos)
+            // console.log(todos)
             break;
         case 'important':
-            displayTodos(todos.filter(todo => ~todo.indexOf("!")));
+            displayTodos(todos.filter(todo => ~todo.text.indexOf("!")));
             break;
         case 'sort':
             const sortBy = args[0];
@@ -46,17 +47,20 @@ function processCommand(command) {
 }
 
 function extractTodos(files) {
-    let todos = [];
+    const todos = [];
+
+    const todoRegex = /\/\/\s*TODO\s*:?\s*(.*)/i;
 
     files.forEach((fileContent, fileName) => {
         const lines = fileContent.split('\n');
-        lines.forEach((line) => {
-            line = line.trim();
-            if (line.startsWith('// TODO')) {
-                let text = line.slice(7).trim();
-                let user = '', date = '';
-                const parts = text.split(';').map(part => part.trim());
 
+        lines.forEach((line) => {
+            const match = line.match(todoRegex);
+            if (match) {
+                let text = match[1].trim();
+                let user = '', date = '';
+
+                const parts = text.split(';').map(part => part.trim());
                 if (parts.length === 3) {
                     user = parts[0];
                     date = parts[1];
@@ -71,6 +75,7 @@ function extractTodos(files) {
 
                 user = user.trim();
                 date = date.trim();
+
                 todos.push({ text, file: fileName, user, date });
             }
         });
