@@ -17,6 +17,11 @@ function processCommand(command) {
         case 'exit':
             process.exit(0);
             break;
+        case 'show':
+            for (const todo of todos) {
+                console.log(todo)
+            }
+            break;
         default:
             console.log('wrong command');
             break;
@@ -28,7 +33,7 @@ function extractTodos(files) {
     let todos = [];
 
     for (const file of files) {
-        const lines = file.content.split('\n');
+        const lines = file.split('\n');
         for (const line of lines) {
             const match = line.match(todoRegex);
             if (match) {
