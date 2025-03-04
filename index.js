@@ -1,5 +1,6 @@
 const {getAllFilePathsWithExtension, readFile} = require('./fileSystem');
 const {readLine} = require('./console');
+const path = require('node:path');
 
 const files = getFiles();
 const todos = extractTodos(files);
@@ -9,7 +10,10 @@ readLine(processCommand);
 
 function getFiles() {
     const filePaths = getAllFilePathsWithExtension(process.cwd(), 'js');
-    return filePaths.map(path => readFile(path));
+    return filePaths.map(filePath => ({
+        content: readFile(filePath),
+        fileName: path.basename(filePath),
+    }));
 }
 
 function processCommand(command) {
@@ -35,9 +39,7 @@ function processCommand(command) {
         case 'date':
             const dateStr = args[0];
             const filteredTodos = filterTodosByDate(dateStr);
-            for (const elem of filteredTodos){
-                console.log(elem);
-            }
+            displayTodos(filteredTodos);
             break;
         default:
             console.log('wrong command');
@@ -50,8 +52,8 @@ function extractTodos(files) {
 
     const todoRegex = /\/\/\s*TODO\s*:?\s*(.*)/i;
 
-    files.forEach((fileContent, fileName) => {
-        const lines = fileContent.split('\n');
+    files.forEach((file) => {
+        const lines = file.content.split('\n');
 
         lines.forEach((line) => {
             const match = line.match(todoRegex);
@@ -75,7 +77,7 @@ function extractTodos(files) {
                 user = user.trim();
                 date = date.trim();
 
-                todos.push({ text, file: fileName, user, date });
+                todos.push({ text, file: file.fileName, user, date });
             }
         });
     });
@@ -94,7 +96,7 @@ function sortTodos(param) {
             sortedTodos = todos.sort((a, b) => a.user.toLowerCase().localeCompare(b.user.toLowerCase()));
             break;
         case 'date':
-            sortedTodos = todos.sort((a, b) => new Date(b.date) - new Date(a.date));
+            sortedTodos = todos.sort((a, b) => new Date(a.date) - new Date(b.date));
             break;
         default:
             console.log('Неверный критерий сортировки');
@@ -113,19 +115,22 @@ function displayTodos(todos) {
     let maxUserLength = 0;
     let maxDateLength = 0;
     let maxCommentLength = 0;
+    let maxFileNameLength = 0;
 
     todos.forEach(todo => {
         maxUserLength = Math.max(maxUserLength, todo.user ? todo.user.length : 3);
         maxDateLength = Math.max(maxDateLength, todo.date ? todo.date.length : 3);
         maxCommentLength = Math.max(maxCommentLength, todo.text.length);
+        maxFileNameLength = Math.max(maxFileNameLength, todo.file.length);
     });
     maxUserLength = Math.min(maxUserLength, 10);
     maxDateLength = Math.min(maxDateLength, 10);
     maxCommentLength = Math.min(maxCommentLength, 50);
+    maxFileNameLength = Math.min(maxFileNameLength, 15);
 
 
-    console.log(`!  |  user${' '.repeat(maxUserLength - 4)} |  date${' '.repeat(maxDateLength - 4)} | comment${' '.repeat(maxCommentLength - 7)}`);
-    console.log('-'.repeat(3 + maxUserLength + maxDateLength + maxCommentLength));
+    console.log(`!  |  user${' '.repeat(maxUserLength - 4)}  |  date${' '.repeat(maxDateLength - 4)}  |  comment${' '.repeat(maxCommentLength - 7)}  |  filename`);
+    console.log('-'.repeat(22 + maxUserLength + maxDateLength + maxCommentLength + maxFileNameLength));
 
     todos.forEach(todo => {
         let importance = todo.text.includes('!') ? '!' : ' ';
@@ -137,11 +142,12 @@ function displayTodos(todos) {
 
         let comment = todo.text.length > maxCommentLength ? todo.text.slice(0, maxCommentLength - 3) + '...' : todo.text;
 
+        let fileName = todo.file.length > 15 ? todo.file.slice(0, 12) + '...' : todo.file;
 
-        console.log(`${importance.padEnd(1)}  |  ${user.padEnd(maxUserLength)}  |  ${date.padEnd(maxDateLength)}  |  ${comment.padEnd(maxCommentLength)}`);
+        console.log(`${importance.padEnd(1)}  |  ${user.padEnd(maxUserLength)}  |  ${date.padEnd(maxDateLength)}  |  ${comment.padEnd(maxCommentLength)}  |  ${fileName.padEnd(10)}`);
     });
 
-    console.log('-'.repeat(3 + maxUserLength + maxDateLength + maxCommentLength + 6));
+    console.log('-'.repeat(22 + maxUserLength + maxDateLength + maxCommentLength + maxFileNameLength));
 }
 
 function filterTodosByDate(dateStr) {
