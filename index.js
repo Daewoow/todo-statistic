@@ -21,6 +21,7 @@ function processCommand(command) {
         case 'user':
             const username = args[0].toLowerCase();
             displayTodos(todos.filter(todo => todo.toLowerCase().includes(username)))
+            break;
         case 'show':
             displayTodos(todos)
             break;
@@ -30,6 +31,13 @@ function processCommand(command) {
         case 'sort':
             const sortBy = args[0];
             sortTodos(sortBy);
+            break;
+        case 'date':
+            const dateStr = args[0];
+            const filteredTodos = filterTodosByDate(dateStr);
+            for (const elem of filteredTodos){
+                console.log(elem);
+            }
             break;
         default:
             console.log('wrong command');
@@ -97,7 +105,7 @@ function displayTodos(todos) {
 
     todos.forEach(todo => {
         let importance = todo.text.includes('!') ? '!' : ' ';
-        let user = todo.user || '---';
+        let user = (todo.user.length < 10 ? todo.user : (todo.user.slice(0,7) + '...')) || '---';
         let date = todo.date || '---';
         let comment = todo.text.length > 50 ? todo.text.slice(0, 47) + '...' : todo.text;
 
@@ -106,6 +114,23 @@ function displayTodos(todos) {
 
     console.log(`---------------------------------------------`);
 }
+
+function filterTodosByDate(dateStr) {
+    const parts = dateStr.split('-').map(Number);
+    let year = parts[0];
+    let month = parts[1] || 1;
+    let day = parts[2] || 1;
+
+    const targetDate = new Date(year, month - 1, day);
+
+    return todos.filter(todo => {
+        if (!todo.date) return false;
+        const todoDate = new Date(todo.date);
+        return todoDate >= targetDate;
+    });
+}
+
+
 
 
 // TODO you can do it!
