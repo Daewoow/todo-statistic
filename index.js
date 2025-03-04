@@ -18,6 +18,9 @@ function processCommand(command) {
         case 'exit':
             process.exit(0);
             break;
+        case 'user':
+            const username = args[0].toLowerCase();
+            displayTodos(todos.filter(todo => todo.toLowerCase().includes(username)))
         case 'show':
             displayTodos(todos)
             break;
