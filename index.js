@@ -20,12 +20,13 @@ function processCommand(command) {
             break;
         case 'user':
             const username = args[0].toLowerCase();
-            displayTodos(todos.filter(todo => todo.toLowerCase().includes(username)))
+            displayTodos(todos.filter(todo => todo.user.toLowerCase() === username))
+            break;
         case 'show':
             displayTodos(todos)
             break;
         case 'important':
-            displayTodos(todos.filter(todo => ~todo.indexOf("!")));
+            displayTodos(todos.filter(todo => ~todo.text.indexOf("!")));
             break;
         case 'sort':
             const sortBy = args[0];
@@ -44,7 +45,7 @@ function extractTodos(files) {
         const lines = fileContent.split('\n');
         lines.forEach((line) => {
             line = line.trim();
-            if (line.startsWith('// TODO')) {
+            if (line.includes('// TODO')) {
                 let text = line.slice(7).trim();
                 let user = '', date = '';
                 const parts = text.split(';').map(part => part.trim());
@@ -63,7 +64,7 @@ function extractTodos(files) {
 
                 user = user.trim();
                 date = date.trim();
-                todos.push({ text, file: fileName, user, date });
+                todos.push({ text, fileName, user, date });
             }
         });
     });
@@ -76,7 +77,7 @@ function sortTodos(param) {
     let sortedTodos = [];
     switch (param) {
         case 'importance':
-            sortedTodos = todos.sort((a, b) => (b.text.includes('!') ? 1 : 0) - (a.text.includes('!') ? 1 : 0));
+            sortedTodos = todos.sort((a, b) => compareImportance(a.text, b.text));
             break;
         case 'user':
             sortedTodos = todos.sort((a, b) => a.user.toLowerCase().localeCompare(b.user.toLowerCase()));
@@ -85,27 +86,53 @@ function sortTodos(param) {
             sortedTodos = todos.sort((a, b) => new Date(b.date) - new Date(a.date));
             break;
         default:
-            console.log('Invalid sort criteria');
+            console.log('Неверный критерий сортировки');
             return;
     }
     displayTodos(sortedTodos);
 }
 
+function compareImportance(x, y){
+    let xImportance = (x.match(/!/g) || []).length;
+    let yImportance = (y.match(/!/g) || []).length;
+    return yImportance - xImportance;
+
+}
 function displayTodos(todos) {
-    console.log(` !  |  user       |  date       | comment`);
-    console.log(`---------------------------------------------`);
+    let maxUserLength = 0;
+    let maxDateLength = 0;
+    let maxCommentLength = 0;
+
+    todos.forEach(todo => {
+        maxUserLength = Math.max(maxUserLength, todo.user ? todo.user.length : 3);
+        maxDateLength = Math.max(maxDateLength, todo.date ? todo.date.length : 3);
+        maxCommentLength = Math.max(maxCommentLength, todo.text.length);
+    });
+    maxUserLength = Math.min(maxUserLength, 10);
+    maxDateLength = Math.min(maxDateLength, 10);
+    maxCommentLength = Math.min(maxCommentLength, 50);
+
+
+    console.log(`!  |  user${' '.repeat(maxUserLength - 4)} |  date${' '.repeat(maxDateLength - 4)} | comment${' '.repeat(maxCommentLength - 7)}`);
+    console.log('-'.repeat(3 + maxUserLength + maxDateLength + maxCommentLength));
 
     todos.forEach(todo => {
         let importance = todo.text.includes('!') ? '!' : ' ';
         let user = todo.user || '---';
-        let date = todo.date || '---';
-        let comment = todo.text.length > 50 ? todo.text.slice(0, 47) + '...' : todo.text;
+        user = user.length > 10 ? user.slice(0, 7) + '...' : user;
 
-        console.log(`${importance.padEnd(2)}|  ${user.padEnd(10)}|  ${date.padEnd(10)}|  ${comment.padEnd(50)}`);
+        let date = todo.date || '---';
+        date = date.length > 10 ? date.slice(0, 7) + '...' : date;
+
+        let comment = todo.text.length > maxCommentLength ? todo.text.slice(0, maxCommentLength - 3) + '...' : todo.text;
+
+
+        console.log(`${importance.padEnd(1)}  |  ${user.padEnd(maxUserLength)}  |  ${date.padEnd(maxDateLength)}  |  ${comment.padEnd(maxCommentLength)}`);
     });
 
-    console.log(`---------------------------------------------`);
+    console.log('-'.repeat(3 + maxUserLength + maxDateLength + maxCommentLength + 6));
 }
+
 
 
 // TODO you can do it!
